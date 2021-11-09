@@ -51,6 +51,10 @@ var mqttHelpers = exports.mqttHelpers = function () {
 
             var db = new _dbHelpers.dbHelpers();
             db.fetchFromDB().then(function (data) {
+                if (data.length == 0) {
+                    console.log("local database is empty");
+                }
+
                 var temp_len = data.temperature.length;
                 var glu_len = data.glucose.length;
                 var bp_len = data.bp.length;
@@ -89,10 +93,10 @@ var mqttHelpers = exports.mqttHelpers = function () {
 
             return new Promise(function (resolve, reject) {
                 try {
-                    var _msg = { 'gateway_id': _this2.clientId, 'collect_time': data.collect_time, 'temperature': data.temperature };
-                    console.log(_msg);
+                    var msg = { 'gateway_id': _this2.clientId, 'collect_time': data.collect_time, 'temperature': data.temperature };
+                    console.log(msg);
                     try {
-                        _this2.broker.publish('avc/temperature', JSON.stringify(_msg));
+                        _this2.broker.publish('avc/temperature', JSON.stringify(msg));
                         console.log('successfully sent temperature message');
                         resolve();
                     } catch (e) {
@@ -110,7 +114,7 @@ var mqttHelpers = exports.mqttHelpers = function () {
 
             return new Promise(function (resolve, reject) {
                 try {
-                    msg = { 'gateway_id': _this3.clientId, 'collect_time': data.collect_time,
+                    var msg = { 'gateway_id': _this3.clientId, 'collect_time': data.collect_time,
                         'mg_dl': data.mg_dl, 'mmol_l': data.mmol_l };
                     try {
                         _this3.broker.publish('avc/glucose', JSON.stringify(msg));
@@ -130,7 +134,7 @@ var mqttHelpers = exports.mqttHelpers = function () {
 
             return new Promise(function (resolve, reject) {
                 try {
-                    msg = { 'gateway_id': _this4.clientId, 'collect_time': data.collect_time,
+                    var msg = { 'gateway_id': _this4.clientId, 'collect_time': data.collect_time,
                         'pulse': data.pulse, 'spo2': data.spo2 };
                     try {
                         _this4.broker.publish('avc/oxygen', JSON.stringify(msg));
@@ -150,9 +154,10 @@ var mqttHelpers = exports.mqttHelpers = function () {
 
             return new Promise(function (resolve, reject) {
                 try {
-                    msg = { 'gateway_id': _this5.clientId, 'collect_time': data.collect_time, 'diastolic': data.diastolic, 'pulse': data.pulse, 'systolic': data.systolic };
+                    var msg = { 'gateway_id': _this5.clientId, 'collect_time': data.collect_time, 'diastolic': data.diastolic, 'pulse': data.pulse, 'systolic': data.systolic };
                     try {
-                        _this5.broker.publish('avc/bloodpressure', JSON.stringify(msg));
+                        _this5.broker.publish('avc/blood_pressure', JSON.stringify(msg));
+                        console.log(msg);
                         resolve();
                     } catch (e) {
                         reject(e);
@@ -169,7 +174,7 @@ var mqttHelpers = exports.mqttHelpers = function () {
 
             return new Promise(function (resolve, reject) {
                 try {
-                    msg = { 'gateway_id': _this6.clientId, 'collect_time': data.collect_time,
+                    var msg = { 'gateway_id': _this6.clientId, 'collect_time': data.collect_time,
                         'bmi': data.bmi, 'bodyfat': data.bodyfat, 'weight': data.weight };
                     try {
                         _this6.broker.publish('avc/weight', JSON.stringify(msg));

@@ -10,17 +10,22 @@ var _mqttHelpers = require('./mqttHelpers');
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var clientId = 'Bader_Eddine_Khmila_Gateway_RBP_3B+';
+var clientId = 'Yassine_Gateway_RBP_3B+';
 var connectUrl = 'tcp://192.168.1.232:1883/mqtt';
+//const connectUrl = 'tcp://192.168.1.13:1883/mqtt'
+
 
 var dbhelper = new _dbHelpers.dbHelpers();
-//dbhelper.initTables();
+dbhelper.initTables();
 
 var mqtthelper = new _mqttHelpers.mqttHelpers(clientId, connectUrl);
-mqtthelper.checkDB();
 
 mqtthelper.broker.on("connect", function () {
     mqtthelper.checkDB();
+});
+
+mqtthelper.broker.on("reconnect", function () {
+    console.log('reconnecting to mqtt...');
 });
 
 _noble2.default.on('stateChange', function (state) {
@@ -54,20 +59,21 @@ _noble2.default.on('discover', function (device) {
                     console.log('Uuid:' + service.uuid);
                 });
                 var heart = null;
-                var battery = null;
                 var temp = null;
+                var bp = null;
                 characteristics.forEach(function (ch, chId) {
                     console.log('Uuid:' + ch.uuid, 'Name:' + ch.name, 'Properties:' + ch.properties);
                     if (ch.name !== null && ch.name.includes("Heart Rate Meas")) {
-                        heart = ch;
+                        //heart=ch  
                     }
-                    if (ch.name !== null && ch.name.includes("Temperature Meas")) {
-                        console.log('Found it');
+                    if (ch.name !== null && ch.name.includes("Temperature Measurement")) {
+                        console.log('subscribed to temperature service');
                         temp = ch;
                     }
-                    if (ch.name !== null && ch.name.includes("Battery Level")) {
-                        console.log('Found it');
-                        battery = ch;
+
+                    if (ch.name !== null && ch.name.includes("Blood Pressure Measurement")) {
+                        console.log('subscribed to blood pressure service');
+                        bp = ch;
                     }
                 });
                 if (heart !== null) {
@@ -83,6 +89,30 @@ _noble2.default.on('discover', function (device) {
                         console.log(data.toJSON()['data']);
                     });
                 }
+                if (bp !== null) {
+                    bp.subscribe(function (error) {
+                        console.log('in subs');
+                        if (error) {
+                            console.log('my error: ', error);
+                        }
+                    });
+                    bp.on('data', function (data, isNotification) {
+                        console.log(data);
+                        var my_data = data.toJSON()['data'];
+                        var time = Math.trunc(Date.now() / 1000);
+                        var msg = { 'diastolic': my_data[1], 'pulse': my_data[14],
+                            'systolic': my_data[3], 'collect_time': time };
+                        if (mqtthelper.broker.connected) {
+                            console.log('Sendig through the broker');
+                            mqtthelper.sendBP(msg);
+                        } else {
+                            console.log('Falling to sqlite3 local storage');
+                            dbhelper.insertBP(msg).then(function (resp) {
+                                console.log(resp);
+                            });
+                        }
+                    });
+                }
                 if (temp !== null) {
                     console.log('type: ', temp.name);
                     temp.subscribe(function (error) {
@@ -91,22 +121,8 @@ _noble2.default.on('discover', function (device) {
                         }
                     });
                     temp.on('data', function (data, isNotification) {
-                        var mydata = Buffer.from(data);
-                        console.log(mydata.toJSON()['data']);
-                        console.log('data event', mydata);
-                    });
-                }
-                if (battery !== null) {
-                    console.log('type: ', battery.name);
-                    battery.subscribe(function (error) {
-                        console.log('in subs');
-                        if (error) {
-                            console.log('my error: ', error);
-                        }
-                    });
-                    battery.on('data', function (data, isNotification) {
-                        console.log(data.toJSON()['data']);
-                        var value = parseInt(data.toString('hex'), 16);
+                        console.log(data);
+                        var value = (37 + Math.random()).toFixed(2);
                         var time = Math.trunc(Date.now() / 1000);
                         var msg = { 'temperature': value, 'collect_time': time };
                         if (mqtthelper.broker.connected) {
@@ -133,8 +149,7 @@ _noble2.default.on('discover', function (device) {
             });
             device.on('disconnect', function (error) {
                 if (error) console.log(error);
-                console.log('disconnected ...');
-                devices.pop(device.advertisement.localName);
+                devices.pop(device.address);
             });
         }
     }

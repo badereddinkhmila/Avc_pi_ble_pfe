@@ -53,12 +53,13 @@ var dbHelpers = exports.dbHelpers = function () {
             var _this2 = this;
 
             this.db.serialize(function () {
-                _this2.db.run('DROP TABLE temperature_readings');
-                _this2.db.run('DROP TABLE bloodpressure_readings');
-                _this2.db.run('DROP TABLE glucose_readings');
-                _this2.db.run('DROP TABLE oxygen_readings');
-                _this2.db.run('DROP TABLE weight_readings');
-                console.log('deleted all tables');
+                //this.db.run(`DROP TABLE IF EXISTS temperature_readings`)
+                //this.db.run(`DROP TABLE IF EXISTS bloodpressure_readings`)
+                //this.db.run(`DROP TABLE IF EXISTS glucose_readings`)
+                //this.db.run(`DROP TABLE IF EXISTS oxygen_readings`)
+                //this.db.run(`DROP TABLE IF EXISTS weight_readings`)
+                //console.log('deleted all tables');
+                console.log('creating all tables');
                 _this2.db.run('CREATE TABLE IF NOT EXISTS temperature_readings\n                    (temperature REAL,collect_time DATETIME);');
                 _this2.db.run('CREATE TABLE IF NOT EXISTS bloodpressure_readings\n                    (diastolic REAL, pulse REAL, systolic REAL,\n                    collect_time DATETIME);');
                 _this2.db.run('CREATE TABLE IF NOT EXISTS glucose_readings\n                    (mg_dl REAL,mmol_l REAL,\n                    collect_time DATETIME);');
@@ -66,11 +67,11 @@ var dbHelpers = exports.dbHelpers = function () {
                 _this2.db.run('CREATE TABLE IF NOT EXISTS weight_readings\n                    (bmi REAL,bodyfat REAL,weight REAL,\n                    collect_time DATETIME);');
             });
             console.log('created all tables');
-            var stmt = this.db.prepare("INSERT INTO temperature_readings VALUES (?,?)");
+            /*var stmt = this.db.prepare("INSERT INTO temperature_readings VALUES (?,?)");
             for (var i = 0; i < 10; i++) {
-                stmt.run(25 + i, Math.trunc(Date.now() / 1000));
+                stmt.run(25+i,Math.trunc(Date.now()/1000));
             }
-            stmt.finalize();
+            stmt.finalize();*/
         }
     }, {
         key: 'insertTemp',
